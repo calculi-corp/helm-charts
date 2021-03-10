@@ -1,5 +1,9 @@
 # Datadog changelog
 
+## 2.10.2
+
+* When node agents are joining an existing DCA managed by another Helm release, they shouldn’t be eligible to cluster checks dispatch.
+
 ## 2.10.1
 
 * Remove the cluster-id configmap mount for process-agent. (Requires Datadog Agent 7.26+ and Datadog Cluster Agent 1.11+, otherwise collection of pods for the Kubernetes Resources page will fail).
