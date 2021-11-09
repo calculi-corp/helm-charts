@@ -19,8 +19,12 @@ datadog:
       value: "true"
   agents:
     volumes: 
-      - name: empty-dir
+      - name: consul-empty-dir
+        emptyDir: {}
+      - name: redis-empty-dir
         emptyDir: {}
     volumeMounts:
-      - name: empty-dir
+      - name: consul-empty-dir
         mountPath: /etc/datadog-agent/conf.d/consul.d
+      - name: redis-empty-dir
+        mountPath: /etc/datadog-agent/conf.d/redisdb.d
