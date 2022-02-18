@@ -1,3 +1,14 @@
+clusterAgent:
+  enabled: true
+  env:
+    - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
+      value: "cert key token trust"
+agents:
+  containers:
+    processAgent:
+      env:
+      - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
+        value: "cert key token trust"
 datadog:
   apiKey: 
   appKey: 
