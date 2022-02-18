@@ -1,14 +1,11 @@
-{{- if and (or $.Values.datadog.networkPolicy.create $.Values.datadog.kubeStateMetricsNetworkPolicy.create) (eq $.Values.datadog.networkPolicy.flavor "cilium") -}}
+{{- if and $.Values.datadog.kubeStateMetricsEnabled (or $.Values.datadog.networkPolicy.create $.Values.datadog.kubeStateMetricsNetworkPolicy.create) (eq $.Values.datadog.networkPolicy.flavor "cilium") -}}
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:
   name: {{ template "datadog.fullname" . }}-kube-state-metrics
+  namespace: {{ .Release.Namespace }}
   labels:
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    app.kubernetes.io/name: "{{ template "datadog.fullname" . }}"
-    app.kubernetes.io/instance: {{ .Release.Name | quote }}
-    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{ include "datadog.labels" . | indent 4 }}
 specs:
   - description: "Egress to Kube API server"
     endpointSelector:

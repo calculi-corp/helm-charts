@@ -3,15 +3,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "datadog.fullname" . }}-cluster-agent
+  namespace: {{ .Release.Namespace }}
   labels:
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    app.kubernetes.io/name: "{{ template "datadog.fullname" . }}"
-    app.kubernetes.io/instance: {{ .Release.Name | quote }}
-    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{ include "datadog.labels" . | indent 4 }}
+    app.kubernetes.io/component: cluster-agent
     {{- if .Values.clusterAgent.additionalLabels }}
 {{ toYaml .Values.clusterAgent.additionalLabels | indent 4 }}
     {{- end }}
+{{ include "provider-labels" . | indent 4 }}
+  {{- if .Values.clusterAgent.deploymentAnnotations }}
+  annotations: {{ toYaml .Values.clusterAgent.deploymentAnnotations | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.clusterAgent.replicas }}
   strategy:
@@ -32,6 +34,8 @@ spec:
   template:
     metadata:
       labels:
+{{ include "datadog.template-labels" . | indent 8 }}
+        app.kubernetes.io/component: cluster-agent
         app: {{ template "datadog.fullname" . }}-cluster-agent
         {{- if .Values.clusterAgent.podLabels }}
 {{ toYaml .Values.clusterAgent.podLabels | indent 8 }}
@@ -39,6 +43,7 @@ spec:
         {{- if .Values.clusterAgent.additionalLabels }}
 {{ toYaml .Values.clusterAgent.additionalLabels | indent 8 }}
         {{- end }}
+{{ include "provider-labels" . | indent 8 }}
       name: {{ template "datadog.fullname" . }}-cluster-agent
       annotations:
         checksum/clusteragent_token: {{ include (print $.Template.BasePath "/secret-cluster-agent-token.yaml") . | sha256sum }}
@@ -55,21 +60,8 @@ spec:
         {{- if .Values.clusterAgent.confd }}
         checksum/confd-config: {{ tpl (toYaml .Values.clusterAgent.confd) . | sha256sum }}
         {{- end }}
-        ad.datadoghq.com/cluster-agent.check_names: '["prometheus"]'
-        ad.datadoghq.com/cluster-agent.init_configs: '[{}]'
-        ad.datadoghq.com/cluster-agent.instances: |
-          [{
-            "prometheus_url": "http://%%host%%:5000/metrics",
-            "namespace": "datadog.cluster_agent",
-            "metrics": [
-              "go_goroutines", "go_memstats_*", "process_*",
-              "api_requests",
-              "datadog_requests", "external_metrics", "rate_limit_queries_*",
-              "cluster_checks_*"
-            ]
-          }]
       {{- if .Values.clusterAgent.podAnnotations }}
-{{ toYaml .Values.clusterAgent.podAnnotations | indent 8 }}
+{{ tpl (toYaml .Values.clusterAgent.podAnnotations) . | indent 8 }}
       {{- end }}
 
     spec:
@@ -108,14 +100,17 @@ spec:
         - containerPort: 5005
           name: agentport
           protocol: TCP
+        - containerPort: 5000
+          name: agentmetrics
+          protocol: TCP
         {{- if .Values.clusterAgent.metricsProvider.enabled }}
         - containerPort: {{ template "clusterAgent.metricsProvider.port" . }}
           name: metricsapi
           protocol: TCP
         {{- end }}
-{{- if .Values.datadog.envFrom }}
+{{- if or .Values.datadog.envFrom .Values.clusterAgent.envFrom }}
         envFrom:
-{{ toYaml .Values.datadog.envFrom | indent 10 }}
+{{ concat .Values.datadog.envFrom .Values.clusterAgent.envFrom | toYaml | indent 10 }}
 {{- end }}
         env:
           - name: DD_HEALTH_PORT
@@ -127,6 +122,22 @@ spec:
                 name: {{ template "datadog.apiSecretName" . }}
                 key: api-key
                 optional: true
+          {{- if .Values.datadog.secretBackend.command }}
+          - name: DD_SECRET_BACKEND_COMMAND
+            value: {{ .Values.datadog.secretBackend.command | quote }}
+          {{- end }}
+          {{- if .Values.datadog.secretBackend.arguments }}
+          - name: DD_SECRET_BACKEND_ARGUMENTS
+            value: {{ .Values.datadog.secretBackend.arguments | quote }}
+          {{- end }}
+          {{- if .Values.datadog.secretBackend.timeout }}
+          - name: DD_SECRET_BACKEND_TIMEOUT
+            value: {{ .Values.datadog.secretBackend.timeout | quote }}
+          {{- end }}
+          {{- if .Values.datadog.tags }}
+          - name: DD_TAGS
+            value: {{ tpl (.Values.datadog.tags | join " " | quote) . }}
+          {{- end }}
           {{- if .Values.clusterAgent.metricsProvider.enabled }}
           - name: DD_APP_KEY
             valueFrom:
@@ -186,7 +197,7 @@ spec:
           {{- if .Values.datadog.leaderLeaseDuration }}
           - name: DD_LEADER_LEASE_DURATION
             value: {{ .Values.datadog.leaderLeaseDuration | quote }}
-          {{- else if .Values.datadog.clusterChecks.enabled }}
+          {{- else if (eq (include "should-enable-cluster-check-workers" .) "true") }}
           - name: DD_LEADER_LEASE_DURATION
             value: "15"
           {{- end }}
@@ -216,22 +227,28 @@ spec:
           - name: DD_COMPLIANCE_CONFIG_CHECK_INTERVAL
             value: {{ .Values.datadog.securityAgent.compliance.checkInterval | quote }}
           {{- end }}
+          {{- end }}
           {{- if .Values.datadog.prometheusScrape.enabled }}
           - name: DD_PROMETHEUS_SCRAPE_ENABLED
             value: "true"
           - name: DD_PROMETHEUS_SCRAPE_SERVICE_ENDPOINTS
             value: {{ .Values.datadog.prometheusScrape.serviceEndpoints | quote }}
+          {{- if .Values.datadog.prometheusScrape.additionalConfigs }}
+          - name: DD_PROMETHEUS_SCRAPE_CHECKS
+            value: {{ .Values.datadog.prometheusScrape.additionalConfigs | toJson | quote }}
           {{- end }}
           {{- end }}
-{{- if .Values.clusterAgent.env }}
-{{ toYaml .Values.clusterAgent.env | indent 10 }}
-{{- end }}
+          {{- include "additional-env-entries" .Values.clusterAgent.env | indent 10 }}
         livenessProbe:
 {{- $live := .Values.clusterAgent.livenessProbe }}
 {{ include "probe.http" (dict "path" "/live" "port" $healthPort "settings" $live) | indent 10 }}
         readinessProbe:
 {{- $ready := .Values.clusterAgent.readinessProbe }}
 {{ include "probe.http" (dict "path" "/ready" "port" $healthPort "settings" $ready) | indent 10 }}
+{{- if .Values.clusterAgent.containers.clusterAgent.securityContext }}
+        securityContext:
+{{ toYaml .Values.clusterAgent.containers.clusterAgent.securityContext | indent 10 }}
+{{- end }}
         volumeMounts:
           - name: installinfo
             subPath: install_info
@@ -244,7 +261,7 @@ spec:
 {{- if .Values.clusterAgent.volumeMounts }}
 {{ toYaml .Values.clusterAgent.volumeMounts | indent 10 }}
 {{- end }}
-{{- if .Values.clusterAgent.confd }}
+{{- if eq (include "need-cluster-agent-confd" .) "true" }}
           - name: confd
             mountPath: /conf.d
             readOnly: true
@@ -266,10 +283,25 @@ spec:
         - name: installinfo
           configMap:
             name: {{ template "datadog.fullname" . }}-installinfo
-{{- if .Values.clusterAgent.confd }}
+{{- if eq (include "need-cluster-agent-confd" .) "true" }}
         - name: confd
           configMap:
             name: {{ template "datadog.fullname" . }}-cluster-agent-confd
+            items:
+{{- range $file, $configs := $.Values.clusterAgent.confd }}
+            - key: {{ $file | quote }}
+              path: {{ $file | quote }}
+{{- end }}
+{{- if .Values.datadog.kubeStateMetricsCore.enabled }}
+            - key: kubernetes_state_core.yaml.default
+              path: kubernetes_state_core.yaml.default
+{{- end }}
+{{- range $integration, $configs := $.Values.clusterAgent.advancedConfd }}
+{{- range $name, $config := $configs }}
+            - key: {{ printf "%s--%s" $integration $name | quote }}
+              path: {{ printf "%s/%s" $integration $name | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- if .Values.clusterAgent.datadog_cluster_yaml }}
         - name: cluster-agent-yaml
@@ -291,10 +323,21 @@ spec:
       tolerations:
 {{ toYaml .Values.clusterAgent.tolerations | indent 8 }}
       {{- end }}
-      {{- if .Values.clusterAgent.affinity }}
       affinity:
+{{- if .Values.clusterAgent.affinity }}
 {{ toYaml .Values.clusterAgent.affinity | indent 8 }}
-      {{- end }}
+{{- else }}
+        # Prefer scheduling the cluster agents on different nodes
+        # to guarantee that the standby instance can immediately take the lead from a leader running of a faulty node.
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: {{ template "datadog.fullname" . }}-cluster-agent
+              topologyKey: kubernetes.io/hostname
+{{- end }}
       nodeSelector:
         {{ template "label.os" . }}: {{ .Values.targetSystem }}
       {{- if .Values.clusterAgent.nodeSelector }}

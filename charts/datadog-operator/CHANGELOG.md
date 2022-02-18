@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.7.10
+
+* Sync operator RBACs from `datadog-operator` repo to add missing `verticalpodautoscalers` RBACs.
+
+## 0.7.9
+
+* Add missing `datadogmetrics` RBACs.
+
+## 0.7.8
+
+* Fix `PodDisruptionBudget` api version definition when using `helm template`.
+
+## 0.7.7
+
+* Update `PodDisruptionBudget` api version to get rid of `policy/v1beta1 PodDisruptionBudget is deprecated in v1.21+, unavailable in v1.25+; use policy/v1 PodDisruptionBudget` warning.
+
+## 0.7.6
+
+* Nothing
+
+## 0.7.5
+
+* Add a configuration field `containerSecurityContext` to configure a security context for a Container
+* Add `site` option to change the Datadog intake site.
+
+## 0.7.4
+
+* Update chart to Datadog CRDs `0.4.5`
+
+## 0.7.3
+
+* Update chart to Datadog Operator `0.7.2` and CRDs `0.4.4`
+
+## 0.7.2
+
+* Add `watchNamespaces` option to configure the namespaces watched by the operator.
+
+## 0.7.1
+
+* Add missing RBAC to the operator to enable the admission controller in the cluster-agent.
+
+## 0.7.0
+
+* Update chart to support the operation version `v0.7.0`
+
+## 0.6.3
+
+* Add missing `poddisruptionbudgets` RBAC when the compliance feature is enabled.
+
+## 0.6.2
+
+* Add a configuration field `collectOperatorMetrics` to disable/enable collecting operator metrics
+
+## 0.6.1
+
+* Update chart for operator release `v0.6.1`
+* Support for Datadog API endpoint can change to different region, `dd_url`
+
+## 0.6.0
+
+* Update chart for Operator release `v0.6.0`
+* Support Datadog Monitors controller
+
+## 0.5.4
+
+* Add apiKey, apiKeyExistingSecret, appKey, and appKeyExistingSecret values to values.yaml and set their respective env vars using a Kubernetes secret
+
 ## 0.5.3
 
 * Only deploy a `PodDisruptionBudget` when `replicaCount` is greater than `1`

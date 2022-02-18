@@ -1,7 +1,6 @@
 # Datadog Agent with Logs, APM, Processes, and System Probe enabled
 # with specific configuration to work on AKS.
 
-
 targetSystem: "linux"
 datadog:
   # apiKey: <DATADOG_API_KEY>
@@ -16,13 +15,13 @@ datadog:
       valueFrom:
         fieldRef:
           fieldPath: spec.nodeName
-    tlsVerify: "false"
+    hostCAPath: /etc/kubernetes/certs/kubeletserver.crt
   logs:
     enabled: true
     containerCollectAll: false
     containerCollectUsingFiles: true
   apm:
-    enabled: true
+    portEnabled: true
     socketPath: /var/run/datadog/apm.socket
     hostSocketPath: /var/run/datadog/
   processAgent:

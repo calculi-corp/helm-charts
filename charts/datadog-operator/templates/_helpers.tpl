@@ -50,3 +50,30 @@ Create the name of the service account to use
 {{- define "datadog-operator.serviceAccountName" -}}
 {{ default (include "datadog-operator.fullname" .) .Values.serviceAccount.name }}
 {{- end -}}
+
+{{/*
+Return secret name to be used based on provided values.
+*/}}
+{{- define "datadog-operator.apiKeySecretName" -}}
+{{- $fullName := printf "%s-apikey" (include "datadog-operator.fullname" .) -}}
+{{- default $fullName .Values.apiKeyExistingSecret | quote -}}
+{{- end -}}
+
+{{/*
+Return secret name to be used based on provided values.
+*/}}
+{{- define "datadog-operator.appKeySecretName" -}}
+{{- $fullName := printf "%s-appkey" (include "datadog-operator.fullname" .) -}}
+{{- default $fullName .Values.appKeyExistingSecret | quote -}}
+{{- end -}}
+
+{{/*
+Return the appropriate apiVersion for PodDisruptionBudget policy APIs.
+*/}}
+{{- define "policy.poddisruptionbudget.apiVersion" -}}
+{{- if or (.Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget") (semverCompare ">=1.21" .Capabilities.KubeVersion.Version) -}}
+"policy/v1"
+{{- else -}}
+"policy/v1beta1"
+{{- end -}}
+{{- end -}}

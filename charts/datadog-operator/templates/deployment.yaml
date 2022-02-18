@@ -19,6 +19,13 @@ spec:
 {{ toYaml .Values.podLabels | indent 8 }}
         {{- end }}
       annotations:
+        {{- if or .Values.apiKey .Values.apiKeyExistingSecret }}
+        checksum/api_key: {{ include (print $.Template.BasePath "/secret_api_key.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if or .Values.appKey .Values.appKeyExistingSecret }}
+        checksum/application_key: {{ include (print $.Template.BasePath "/secret_application_key.yaml") . | sha256sum }}
+        {{- end }}
+        {{- if .Values.collectOperatorMetrics }}
         ad.datadoghq.com/{{ .Chart.Name }}.check_names: '["openmetrics"]'
         ad.datadoghq.com/{{ .Chart.Name }}.init_configs: '[{}]'
         ad.datadoghq.com/{{ .Chart.Name }}.instances: |
@@ -27,6 +34,7 @@ spec:
             "namespace": "datadog.operator",
             "metrics": ["*"]
           }]
+        {{- end }}
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
@@ -42,13 +50,39 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: WATCH_NAMESPACE
+            {{- if .Values.watchNamespaces }}
+              value: {{ .Values.watchNamespaces | join "," }}
+            {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            {{- end }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            {{- if or .Values.apiKey .Values.apiKeyExistingSecret }}
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "datadog-operator.apiKeySecretName" . }}
+                  key: api-key
+            {{- end }}
+            {{- if or .Values.appKey .Values.appKeyExistingSecret }}
+            - name: DD_APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "datadog-operator.appKeySecretName" . }}
+                  key: app-key
+            {{- end }}
+            {{- if .Values.site }}
+            - name: DD_SITE
+              value: {{ .Values.site }}
+            {{- end }}
+            {{- if .Values.dd_url }}
+            - name: DD_URL
+              value: {{ .Values.dd_url }}
+            {{- end }}
           args:
             - "-supportExtendedDaemonset={{ .Values.supportExtendedDaemonset }}"
             - "-logEncoder=json"
@@ -60,6 +94,7 @@ spec:
           {{- if .Values.secretBackend.arguments }}
             - "-secretBackendArgs={{ .Values.secretBackend.arguments }}"
           {{- end }}
+            - "-datadogMonitorEnabled={{ .Values.datadogMonitor.enabled }}"
           ports:
             - name: metrics
               containerPort: {{ .Values.metricsPort }}
@@ -71,6 +106,10 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
