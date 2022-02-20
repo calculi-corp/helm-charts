@@ -10,6 +10,7 @@ agents:
       - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
         value: "cert key token trust"
 datadog:
+  clusterName:
   apiKey: 
   appKey: 
   logs:
