@@ -16,6 +16,7 @@ datadog:
   logs:
     enabled: true
     containerCollectAll: true
+    containerCollectUsingFiles: true
   processAgent:
     processCollection: true
   tags:
