@@ -10,7 +10,7 @@ agents:
       - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
         value: "cert key token trust"
 datadog:
-  clusterName:
+  clusterName: 
   apiKey: 
   appKey: 
   logs:
@@ -30,14 +30,14 @@ datadog:
       value: "true"
     - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
       value: "true"
-  agents:
-    volumes: 
-      - name: consul-empty-dir
-        emptyDir: {}
-      - name: redis-empty-dir
-        emptyDir: {}
-    volumeMounts:
-      - name: consul-empty-dir
-        mountPath: /etc/datadog-agent/conf.d/consul.d
-      - name: redis-empty-dir
-        mountPath: /etc/datadog-agent/conf.d/redisdb.d
+agents:
+  volumes: 
+    - name: consul-empty-dir
+      emptyDir: {}
+    - name: redis-empty-dir
+      emptyDir: {}
+  volumeMounts:
+    - name: consul-empty-dir
+      mountPath: /etc/datadog-agent/conf.d/consul.d
+    - name: redis-empty-dir
+      mountPath: /etc/datadog-agent/conf.d/redisdb.d
