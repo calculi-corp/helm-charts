@@ -1,5 +1,71 @@
 # Datadog changelog
 
+## 0.15.5
+
+* Update private location image version to `1.29.0`.
+
+## 0.15.4
+
+* Support `commonLabels` for resources from Kubernetes deployment
+
+## 0.15.3
+
+* Support `commonlabels` configuration to be able to add common labels on all resources created by the chart.
+
+### 0.15.2
+
+* Update private location image version to `1.28.0`.
+
+### 0.15.1
+
+* Update private location image version to `1.27.0`.
+
+### 0.15.0
+
+* Do not default to `configFile` value for configuration to allow using `extraVolumes` to mount configuration files
+
+### 0.14.4
+
+* Update private location image version to `1.26.0`.
+
+### 0.14.3
+
+* Update private location image version to `1.25.0`.
+
+### 0.14.2
+
+* Add ability to template the ConfigMap/Secret name.
+
+### 0.14.1
+
+* Update private location image version to `1.24.0`.
+
+### 0.14.0
+
+* Replace deprecated liveness probe mechanism with the HTTP-based one.
+* Add readiness probe using the HTTP-based mechanism.
+* Add `enableStatusProbes` value to enable/disable both liveness and readiness probes. Minimal private location image version required: `1.12.0`.
+
+### 0.13.4
+
+* Update private location image version to `1.23.0`.
+
+### 0.13.3
+
+* Update private location image version to `1.22.0`.
+
+### 0.13.2
+
+* Update private location image version to `1.21.0`.
+
+### 0.13.1
+
+* Update private location image version to `1.20.0`.
+
+### 0.13.0
+
+* Add extra mount (`extraVolumes` and `extraVolumeMounts` ) for supporting private root CA certificates as described in <https://docs.datadoghq.com/synthetics/private_locations/configuration/#private-root-certificates>.
+
 ### 0.12.1
 
 * Update private location image version to `1.19.0`.

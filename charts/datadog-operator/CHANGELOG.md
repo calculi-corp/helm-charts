@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.8.8
+
+* Update chart to Datadog Operator tag `0.8.2`.
+
+## 0.8.7
+
+* Add namespaces to all namespace-scoped objects using the HELM standard `Release.namespace`.
+
+## 0.8.6
+
+* Updating dependency to CRD chart.
+
+## 0.8.5
+
+* Updating dependency to CRD chart.
+
+## 0.8.4
+
+* Update dependency on CRD charts to `0.5.2` to allow deployment on Google marketplace.
+
+## 0.8.3
+
+* Update chart to Datadog Operator tag `0.8.1`.
+
+## 0.8.2
+
+* Fix comments in `values.yaml` to allow a seamless `helm-docs` update.
+
+## 0.8.1
+
+* Add arbitrary environment variable definition.
+
+## 0.8.0
+
+* Update chart to Datadog Operator `0.8.0`.
+
+## 0.7.11
+
+* Allow additional service account annotations.
+
 ## 0.7.10
 
 * Sync operator RBACs from `datadog-operator` repo to add missing `verticalpodautoscalers` RBACs.

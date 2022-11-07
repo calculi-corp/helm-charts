@@ -2,7 +2,7 @@
 
 To install the chart, run:
 
-helm upgrade --install --debug --wait --set datadog.clusterName=<name_of_the_cluster> datadog-agent -f charts/deploy.yaml datadog/datadog
+helm upgrade --install --debug --wait -f deploy.yaml datadog-agent -n guide-rails datadog/datadog
 
 See the charts/deploy.yaml.template file for the representation of the deploy.yaml
 

@@ -33,19 +33,30 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.enableStatusProbes }}
           livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - '[ $(expr $(cat /tmp/liveness.date) + 300000) -gt $(date +%s%3N) ]'
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+            httpGet:
+              path: /liveness
+              port: 8080
+          readinessProbe:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 2
-            failureThreshold: 3
+            httpGet:
+              path: /readiness
+              port: 8080
+          {{- end }}
           volumeMounts:
+          {{- if or (ne .Values.configFile "{}") (.Values.configConfigMap) (.Values.configSecret) }}
           - mountPath: /etc/datadog
             name: worker-config
+          {{- end }}
+          {{- if .Values.extraVolumeMounts }}
+          {{- toYaml .Values.extraVolumeMounts | nindent 10 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 {{- if .Values.envFrom }}
@@ -69,15 +80,20 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+      {{- if or (ne .Values.configFile "{}") (.Values.configConfigMap) (.Values.configSecret) }}
       - name: worker-config
         {{- if .Values.configConfigMap }}
         configMap:
-          name: {{ .Values.configConfigMap | quote }}
+          name: {{ tpl .Values.configConfigMap . | quote }}
         {{- else }}
         secret:
         {{- if .Values.configSecret }}
-          secretName: {{ .Values.configSecret | quote }}
+          secretName: {{ tpl .Values.configSecret . | quote }}
         {{- else }}
           secretName: {{ include "synthetics-private-location.fullname" . }}-config
         {{- end }}
         {{- end }}
+      {{- end }}
+      {{- if .Values.extraVolumes }}
+      {{- toYaml .Values.extraVolumes | nindent 6 }}
+      {{- end }}

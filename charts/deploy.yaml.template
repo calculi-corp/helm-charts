@@ -1,18 +1,33 @@
 clusterAgent:
+  replicas: 2
+  createPodDisruptionBudget: true
   enabled: true
   env:
     - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
       value: "cert key token trust"
 agents:
+  podSecurity:
+    securityContextConstraints:
+      create: true
   containers:
     processAgent:
       env:
       - name: DD_ORCHESTRATOR_EXPLORER_CUSTOM_SENSITIVE_WORDS
         value: "cert key token trust"
+clusterChecksRunner:
+  enabled: true
 datadog:
-  clusterName: 
-  apiKey: 
-  appKey: 
+#  kubelet:
+#    tlsVerify: false
+#    host:
+#      valueFrom:
+#        fieldRef:
+#          fieldPath: status.hostIP
+  clusterChecks:
+    enabled: true
+  clusterName: <insert your Kubernetes cluster name here>
+  apiKey: <insert your Datadog API key here>
+  appKey: <insert your Datadog Application key here>
   logs:
     enabled: true
     containerCollectAll: true
@@ -20,7 +35,7 @@ datadog:
   processAgent:
     processCollection: true
   tags:
-    customer: calculi
+    customer: <insert the customer name for the installation here>
   dogstatsd:
     originDetection: true
     useHostPort: true

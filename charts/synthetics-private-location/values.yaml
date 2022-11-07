@@ -5,13 +5,17 @@
 # replicaCount -- Number of instances of Datadog Synthetics Private Location
 replicaCount: 1
 
+# commonLabels -- Labels to apply to all resources
+commonLabels: {}
+# team_name: dev
+
 image:
   # image.repository -- Repository to use for Datadog Synthetics Private Location image
   repository: gcr.io/datadoghq/synthetics-private-location-worker
   # image.pullPolicy -- Define the pullPolicy for Datadog Synthetics Private Location image
   pullPolicy: IfNotPresent
   # image.tag -- Define the Datadog Synthetics Private Location version to use
-  tag: 1.19.0
+  tag: 1.29.0
 
 # imagePullSecrets -- Datadog Synthetics Private Location repository pullSecret (ex: specify docker registry credentials)
 imagePullSecrets: []
@@ -25,6 +29,22 @@ serviceAccount:
   create: true
   # serviceAccount.name -- The name of the service account to use. If not set name is generated using the fullname template
   name: ""
+
+# Create a ConfigMap containing the PEM files of your custom CA Root certificate
+# Then add it as an extra volume mounted on /etc/datadog/certs/
+# extraVolumes -- Optionally specify extra list of additional volumes to mount into the pod
+extraVolumes: []
+# extraVolumes:
+# - name: capem-volume
+#   configMap:
+#     name: ca-pemstore-cm
+
+# extraVolumeMounts -- Optionally specify extra list of additional volumeMounts for container
+extraVolumeMounts: []
+# extraVolumeMounts:
+# - name: capem-volume
+#   mountPath: /etc/datadog/certs/
+#   readOnly: true
 
 # podAnnotations -- Annotations to set to Datadog Synthetics Private Location PODs
 podAnnotations: {}
@@ -65,7 +85,7 @@ affinity: {}
 # configFile -- JSON string containing the configuration of the private location worker
 configFile: "{}"
 
-# configConfigMap -- Config Map that stores the configuration of the private location worked for the deployment
+# configConfigMap -- Config Map that stores the configuration of the private location worker for the deployment
 configConfigMap: ""
 
 # configSecret -- Secret that stores the configuration of the private location worker for the deployment
@@ -88,3 +108,7 @@ hostAliases: []
 #  - ip: "10.0.0.1"
 #    hostnames:
 #    - "host.domain.com"
+
+# enableStatusProbes -- Enable both liveness and readiness probes (minimal private location image version required: 1.12.0)
+enableStatusProbes: false
+  # Requires to be in sync with `enableStatusProbes` in the configuration of the private location worker

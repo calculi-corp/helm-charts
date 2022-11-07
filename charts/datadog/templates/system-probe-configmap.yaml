@@ -33,6 +33,7 @@ data:
       max_tracked_connections: {{ $.Values.datadog.systemProbe.maxTrackedConnections }}
       conntrack_max_state_size: {{ $.Values.datadog.systemProbe.conntrackMaxStateSize }}
       enable_runtime_compiler: {{ $.Values.datadog.systemProbe.enableRuntimeCompiler }}
+      enable_kernel_header_download: {{ $.Values.datadog.systemProbe.enableKernelHeaderDownload }}
       runtime_compiler_output_dir: {{ $.Values.datadog.systemProbe.runtimeCompilationAssetDir }}/build
       kernel_header_download_dir: {{ $.Values.datadog.systemProbe.runtimeCompilationAssetDir }}/kernel-headers
       apt_config_dir: /host/etc/apt
@@ -45,11 +46,27 @@ data:
       enabled: {{ $.Values.datadog.serviceMonitoring.enabled }}
     runtime_security_config:
       enabled: {{ $.Values.datadog.securityAgent.runtime.enabled }}
+      fim_enabled: {{ $.Values.datadog.securityAgent.runtime.fimEnabled }}
       socket: /var/run/sysprobe/runtime-security.sock
       policies:
         dir: /etc/datadog-agent/runtime-security.d
       syscall_monitor:
         enabled: {{ $.Values.datadog.securityAgent.runtime.syscallMonitor.enabled }}
+      network:
+        enabled: {{ $.Values.datadog.securityAgent.runtime.network.enabled }}
+{{- if .Values.datadog.securityAgent.runtime.activityDump.enabled }}
+      activity_dump:
+        enabled: true
+        traced_cgroups_count: {{ $.Values.datadog.securityAgent.runtime.activityDump.tracedCgroupsCount }}
+        cgroup_dump_timeout: {{ $.Values.datadog.securityAgent.runtime.activityDump.cgroupDumpTimeout }}
+        cgroup_wait_list_size:  {{ $.Values.datadog.securityAgent.runtime.activityDump.cgroupWaitListSize }}
+        path_merge:
+          enabled: {{ $.Values.datadog.securityAgent.runtime.activityDump.pathMerge.enabled }}
+{{ else }}
+      activity_dump:
+        enabled: false
+        traced_cgroups_count: 0
+{{ end }}
 
 {{- if eq .Values.datadog.systemProbe.seccomp "localhost/system-probe" }}
 ---
@@ -76,8 +93,10 @@ data:
             "capget",
             "capset",
             "chdir",
+            "chmod",
             "clock_gettime",
             "clone",
+            "clone3",
             "close",
             "connect",
             "copy_file_range",
@@ -91,7 +110,6 @@ data:
             "epoll_ctl_old",
             "epoll_pwait",
             "epoll_wait",
-            "epoll_wait",
             "epoll_wait_old",
             "eventfd",
             "eventfd2",
@@ -99,6 +117,8 @@ data:
             "execveat",
             "exit",
             "exit_group",
+            "faccessat",
+            "faccessat2",
             "fchmod",
             "fchmodat",
             "fchown",
@@ -118,7 +138,9 @@ data:
             "getegid",
             "geteuid",
             "getgid",
+            "getgroups",
             "getpeername",
+            "getpgrp",
             "getpid",
             "getppid",
             "getpriority",
@@ -154,6 +176,7 @@ data:
             "newfstatat",
             "open",
             "openat",
+            "openat2",
             "pause",
             "perf_event_open",
             "pipe",
@@ -172,8 +195,10 @@ data:
             "recvmsg",
             "rename",
             "renameat",
+            "renameat2",
             "restart_syscall",
             "rmdir",
+            "rseq",
             "rt_sigaction",
             "rt_sigpending",
             "rt_sigprocmask",
@@ -197,7 +222,9 @@ data:
             "setgid32",
             "setgroups",
             "setgroups32",
+            "setitimer",
             "setns",
+            "setpgid",
             "setrlimit",
             "setsid",
             "setsidaccept4",
@@ -211,8 +238,8 @@ data:
             "stat",
             "stat64",
             "statfs",
-            "sysinfo",
             "symlinkat",
+            "sysinfo",
             "tgkill",
             "umask",
             "uname",
@@ -221,10 +248,7 @@ data:
             "wait4",
             "waitid",
             "waitpid",
-            "write",
-            "getgroups",
-            "getpgrp",
-            "setpgid"
+            "write"
           ],
           "action": "SCMP_ACT_ALLOW",
           "args": null
@@ -243,6 +267,22 @@ data:
             }
           ],
           "comment": "",
+          "includes": {},
+          "excludes": {}
+        },
+        {
+          "names": [
+            "kill"
+          ],
+          "action": "SCMP_ACT_ALLOW",
+          "args": [
+            {
+              "index": 1,
+              "value": 0,
+              "op": "SCMP_CMP_EQ"
+            }
+          ],
+          "comment": "allow process detection via kill",
           "includes": {},
           "excludes": {}
         }

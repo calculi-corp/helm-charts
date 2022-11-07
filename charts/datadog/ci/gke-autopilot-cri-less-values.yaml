@@ -1,7 +1,4 @@
-providers:
-  gke:
-    autopilot: true
-
+# Empty values file for testing default parameters.
 datadog:
   apiKey: "00000000000000000000000000000000"
   appKey: "0000000000000000000000000000000000000000"
@@ -15,18 +12,12 @@ datadog:
   kubeStateMetricsCore:
     enabled: true
 
-  confd:
-    redisdb.yaml: |-
-      init_config:
-      instances:
-        - host: "name"
-          port: "6379"
+  containerRuntimeSupport:
+    enabled: false
 
-  checksd:
-    service.py: |-
-
-agents:
-  useConfigMap: true
+providers:
+  gke:
+    autopilot: true
 
 clusterAgent:
   metricsProvider:

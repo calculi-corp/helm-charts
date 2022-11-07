@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.5.6
+
+* Introduce option to store DatadogAgent v2alpha1 or v1alpha1.
+
+## 0.5.5
+
+* Fix CI, by renaming `kubeval.yaml` to `kubeval-values.yaml`
+
+## 0.5.4
+
+* Fix semver comparison for minor version corner case.
+* Update charts.
+
+## 0.5.3
+
+* Fix the semver comparison so v1beta1 is used on 1.21.
+
+## 0.5.2
+
+* Rely on the Kubernetes version to deploy the CRD v1 or v1beta1.
+
+## 0.5.1
+
+* Remove `preserveUnknownFields` to maintain compatibility with Kubernetes versions <1.15.
+
+## 0.5.0
+
+* Update CRDs from Datadog Operator v0.8.0.
+
+## 0.4.7
+
+* Fix Capabilities.APIVersions check
+
 ## 0.4.6
 
 * Nothing
